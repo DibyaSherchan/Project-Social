@@ -37,13 +37,13 @@ const EditProfile = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-  
+
     const formData = new FormData();
     formData.append('description', description);
     if (profilePicture) {
-      formData.append('picture', profilePicture); // Use the same key as used in backend multer setup
+      formData.append('picture', profilePicture);
     }
-  
+
     try {
       const response = await axios.put(`http://localhost:3001/users/${userId}`, formData, {
         headers: {
@@ -51,8 +51,8 @@ const EditProfile = () => {
           'Content-Type': 'multipart/form-data',
         },
       });
-      localStorage.setItem('user', JSON.stringify(response.data)); // Save the updated user data
-  
+      localStorage.setItem('user', JSON.stringify(response.data)); 
+
       alert('Profile updated successfully!');
       navigate(`/profile/${userId}?updated=true`);
     } catch (error) {
@@ -60,39 +60,38 @@ const EditProfile = () => {
       alert('An error occurred while updating your profile.');
     }
   };
-  
-  
+
   if (!user) return <p>Loading...</p>;
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg">
-      <h1 className="text-2xl font-bold mb-4">Edit Profile</h1>
+    <div className="max-w-lg mx-auto p-6 bg-cream shadow-lg border border-brown-300 rounded-lg">
+      <h1 className="text-2xl font-bold text-brown-800 mb-6">Edit Profile</h1>
       <form onSubmit={handleFormSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
+        <div className="mb-6">
+          <label className="block text-brown-800 font-bold mb-2">
             Profile Picture
           </label>
           <input
             type="file"
             onChange={handleProfilePictureChange}
-            className="border rounded w-full py-2 px-3 text-gray-700"
+            className="border border-brown-400 bg-cream text-brown-800 rounded w-full py-2 px-3"
           />
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
+        <div className="mb-6">
+          <label className="block text-brown-800 font-bold mb-2">
             Description
           </label>
           <textarea
             value={description}
             onChange={handleDescriptionChange}
-            className="border rounded w-full py-2 px-3 text-gray-700"
+            className="border border-brown-400 bg-cream text-brown-800 rounded w-full py-2 px-3"
             placeholder="Update your description"
             rows="4"
           />
         </div>
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          className="bg-yellow-700 hover:bg-dark-brown text-white font-bold py-2 px-4 rounded"
         >
           Save Changes
         </button>

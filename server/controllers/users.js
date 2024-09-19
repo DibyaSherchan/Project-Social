@@ -1,13 +1,13 @@
 import User from "../models/user.js";
 
-//Read
+/* READ */
 export const getUser = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findById(id);
     res.status(200).json(user);
-  } catch (s) {
-    res.status(404).json({ message: s.message });
+  } catch (err) {
+    res.status(404).json({ message: err.message });
   }
 };
 
@@ -25,12 +25,12 @@ export const getUserFriends = async (req, res) => {
       }
     );
     res.status(200).json(formattedFriends);
-  } catch (s) {
-    res.status(404).json({ message: s.message });
+  } catch (err) {
+    res.status(404).json({ message: err.message });
   }
 };
 
-//Update
+/* UPDATE */
 export const addRemoveFriend = async (req, res) => {
   try {
     const { id, friendId } = req.params;
@@ -56,13 +56,12 @@ export const addRemoveFriend = async (req, res) => {
       }
     );
 
-    res.status(200).json(formattedFriends)
-  } catch (s) {
-    res.status(404).json({ message: s.message });
+    res.status(200).json(formattedFriends);
+  } catch (err) {
+    res.status(404).json({ message: err.message });
   }
 };
 
-// Update user profile
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
