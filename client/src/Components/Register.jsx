@@ -20,52 +20,50 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     const { firstName, lastName, email, password, confirmPassword } = formData;
-  
+
     if (password !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-  
+
     try {
       const data = new FormData();
       data.append("firstName", firstName);
       data.append("lastName", lastName);
       data.append("email", email);
       data.append("password", password);
-  
+
       // Sending registration request
-      const response = await axios.post("http://localhost:3001/auth/register", data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-  
-      // Assuming backend returns a token and user data
+      const response = await axios.post(
+        "http://localhost:3001/auth/register",
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
       const { token, user } = response.data;
-  
-      // Save token and user data to local storage
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-  
-      console.log("User registered and data saved in local storage:", response.data);
+
       alert("Registration successful!");
       navigate("/login");
     } catch (error) {
-      console.error("Registration failed:", error.response ? error.response.data : error.message);
       alert(error.response?.data?.error || "An error occurred during registration");
     }
   };
-  
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-sm">
-        <h2 className="text-2xl font-bold text-center mb-6">Register</h2>
+    <div className="flex items-center justify-center min-h-screen bg-[#f5f5dc]">
+      <div className="bg-[#fdf2e9] border border-[#d8b892] p-10 rounded-lg shadow-lg w-full max-w-md vintage-texture">
+        <h2 className="text-3xl font-bold text-center mb-6 font-serif text-[#3e2723]">Create Account</h2>
         <form onSubmit={handleRegister}>
           <div className="mb-4">
             <label
               htmlFor="firstName"
-              className="block text-gray-700 text-sm font-bold mb-2"
+              className="block text-[#6e5039] text-sm font-semibold mb-2 font-serif"
             >
               First Name
             </label>
@@ -75,14 +73,14 @@ const Register = () => {
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="w-full p-3 border border-[#d8b892] rounded bg-[#f5f5dc] text-gray-800 font-serif focus:ring-2 focus:ring-[#b78c5b] focus:outline-none"
               placeholder="Enter your first name"
             />
           </div>
           <div className="mb-4">
             <label
               htmlFor="lastName"
-              className="block text-gray-700 text-sm font-bold mb-2"
+              className="block text-[#6e5039] text-sm font-semibold mb-2 font-serif"
             >
               Last Name
             </label>
@@ -92,14 +90,14 @@ const Register = () => {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="w-full p-3 border border-[#d8b892] rounded bg-[#f5f5dc] text-gray-800 font-serif focus:ring-2 focus:ring-[#b78c5b] focus:outline-none"
               placeholder="Enter your last name"
             />
           </div>
           <div className="mb-4">
             <label
               htmlFor="email"
-              className="block text-gray-700 text-sm font-bold mb-2"
+              className="block text-[#6e5039] text-sm font-semibold mb-2 font-serif"
             >
               Email Address
             </label>
@@ -109,14 +107,14 @@ const Register = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="w-full p-3 border border-[#d8b892] rounded bg-[#f5f5dc] text-gray-800 font-serif focus:ring-2 focus:ring-[#b78c5b] focus:outline-none"
               placeholder="Enter your email"
             />
           </div>
           <div className="mb-4">
             <label
               htmlFor="password"
-              className="block text-gray-700 text-sm font-bold mb-2"
+              className="block text-[#6e5039] text-sm font-semibold mb-2 font-serif"
             >
               Password
             </label>
@@ -126,14 +124,14 @@ const Register = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="w-full p-3 border border-[#d8b892] rounded bg-[#f5f5dc] text-gray-800 font-serif focus:ring-2 focus:ring-[#b78c5b] focus:outline-none"
               placeholder="Enter your password"
             />
           </div>
           <div className="mb-6">
             <label
               htmlFor="confirm-password"
-              className="block text-gray-700 text-sm font-bold mb-2"
+              className="block text-[#6e5039] text-sm font-semibold mb-2 font-serif"
             >
               Confirm Password
             </label>
@@ -143,21 +141,21 @@ const Register = () => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="w-full p-3 border border-[#d8b892] rounded bg-[#f5f5dc] text-gray-800 font-serif focus:ring-2 focus:ring-[#b78c5b] focus:outline-none"
               placeholder="Confirm your password"
             />
           </div>
           <div className="flex items-center justify-between">
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              className="bg-[#3e2723] hover:bg-[#5c4033] text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
             >
               Register
             </button>
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              className="bg-[#5c4033] hover:bg-[#3e2723] text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
             >
               Login
             </button>

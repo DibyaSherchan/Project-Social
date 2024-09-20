@@ -125,19 +125,22 @@ const Profile = () => {
     }
   };
 
-  // Function to delete a post
   const handleDeletePost = async (postId) => {
+    console.log("Attempting to delete post with ID:", postId);
     try {
       await axios.delete(`http://localhost:3001/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      setPosts(posts.filter((post) => post._id !== postId)); // Remove the post from the state
+      setPosts(posts.filter((post) => post._id !== postId));
     } catch (error) {
-      console.error("Error deleting post:", error);
+      console.error("Error deleting post:", error.response ? error.response.data : error.message);
     }
   };
+  
+  
+  
 
   if (!user) return <p>Loading...</p>;
 
