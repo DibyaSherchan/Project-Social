@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
-import { useSelector, useDispatch } from "react-redux";
-import { setPosts } from "../state";
+import { useDispatch } from "react-redux";
+import { setPosts, setFriends } from "../state";
 import {
   AiOutlineLike,
   AiFillLike,
@@ -13,15 +13,26 @@ import {
 
 const Home = () => {
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.token); // Fetch token from Redux state
-  const user = useSelector((state) => state.user); // Fetch user from Redux state
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const [posts, setPostsState] = useState([]);
-  const userId = user?._id; // Extract user ID from user object
+  const userId = user?._id;
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(storedUser);
+    }
+  }, []);
 
   const fetchPosts = async () => {
+    if (!token) return;
+
     const response = await fetch("http://localhost:3001/posts", {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}` }, // Use token from Redux state
+      headers: { Authorization: `Bearer ${token}` },
     });
     const data = await response.json();
     setPostsState(data);
@@ -32,18 +43,16 @@ const Home = () => {
     if (token) {
       fetchPosts();
     }
-  }, [token, dispatch]);
+  }, [token]);
 
   const handleLike = async (postId) => {
     const response = await fetch(`http://localhost:3001/posts/${postId}/like`, {
       method: "PATCH",
       headers: {
-        Authorization: `Bearer ${token}`, // Use token from Redux state
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        userId,
-      }),
+      body: JSON.stringify({ userId }),
     });
     const updatedPost = await response.json();
     setPostsState((prevPosts) =>
@@ -60,10 +69,7 @@ const Home = () => {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        userId,
-        comment,
-      }),
+      body: JSON.stringify({ userId, comment }),
     });
     const updatedPost = await response.json();
     setPostsState((prevPosts) =>
@@ -74,22 +80,21 @@ const Home = () => {
   };
 
   const handleAddFriend = async (friendId) => {
-    const response = await fetch(`http://localhost:3001/users/${friendId}/add`, {
+    const response = await fetch(`http://localhost:3001/users/${userId}/${friendId}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        userId,
-      }),
     });
     const updatedUser = await response.json();
-    dispatch(setUser(updatedUser)); // Assuming you have an action to update the user
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    dispatch(setFriends({ friends: updatedUser.friends }));
   };
 
   const isFriend = (friendId) => {
-    return user?.friends?.includes(friendId);
+    return user?.friends?.some(friend => friend._id === friendId);
   };
 
   return (
@@ -110,19 +115,21 @@ const Home = () => {
               <div className="flex items-center mb-4">
                 <img
                   src={`http://localhost:3001/assets/${post.userPicturePath}`}
-                  alt={post.name}
+                  alt={post.firstName}
                   className="w-12 h-12 rounded-full mr-4"
                 />
                 <div>
-                  <h2 className="text-xl font-semibold">{post.name}</h2>
+                  <h2 className="text-xl font-semibold">{post.firstName} {post.lastName}</h2>
                   <p className="text-gray-600">{post.location}</p>
                 </div>
               </div>
-              <img
-                src={`http://localhost:3001/assets/${post.picturePath}`}
-                alt="Post"
-                className="w-full h-60 object-cover mb-4 rounded"
-              />
+              {post.picturePath && (
+                <img
+                  src={`http://localhost:3001/assets/${post.picturePath}`}
+                  alt="Post"
+                  className="w-full h-[500px] object-cover mb-4 rounded"
+                />
+              )}
               <p className="mb-4">{post.description}</p>
               <div className="flex items-center mb-4 space-x-4">
                 <button
@@ -149,17 +156,19 @@ const Home = () => {
                   <AiOutlineShareAlt size={24} className="mr-2" />
                   Share
                 </button>
-                <button
-                  onClick={() => handleAddFriend(post.userId)}
-                  className="text-[#5c4033] hover:text-[#3e2723] flex items-center"
-                >
-                  {isFriend(post.userId) ? (
-                    <AiOutlineUserDelete size={24} className="mr-2" />
-                  ) : (
-                    <AiOutlineUserAdd size={24} className="mr-2" />
-                  )}
-                  {isFriend(post.userId) ? "Remove Friend" : "Add Friend"}
-                </button>
+                {post.userId !== userId && (
+                  <button
+                    onClick={() => handleAddFriend(post.userId)}
+                    className="text-[#5c4033] hover:text-[#3e2723] flex items-center"
+                  >
+                    {isFriend(post.userId) ? (
+                      <AiOutlineUserDelete size={24} className="mr-2" />
+                    ) : (
+                      <AiOutlineUserAdd size={24} className="mr-2" />
+                    )}
+                    {isFriend(post.userId) ? "Remove Friend" : "Add Friend"}
+                  </button>
+                )}
               </div>
               <div className="mt-4">
                 {post.comments.map((comment, index) => (

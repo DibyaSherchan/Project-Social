@@ -117,16 +117,18 @@ const Profile = () => {
           },
         }
       );
-      setPosts(response.data); // Update the posts list with the new post
+
+      // Append the new post to the existing posts
+      setPosts((prevPosts) => [response.data, ...prevPosts]);
       setImage(null);
       setPost("");
+      window.location.reload();
     } catch (error) {
       console.error("Error creating post:", error);
     }
   };
 
   const handleDeletePost = async (postId) => {
-    console.log("Attempting to delete post with ID:", postId);
     try {
       await axios.delete(`http://localhost:3001/posts/${postId}`, {
         headers: {
@@ -138,11 +140,6 @@ const Profile = () => {
       console.error("Error deleting post:", error.response ? error.response.data : error.message);
     }
   };
-  
-  
-  
-
-  if (!user) return <p>Loading...</p>;
 
   const profilePictureUrl = user.profilePicture
     ? `http://localhost:3001/${user.profilePicture}`
@@ -244,18 +241,17 @@ const Profile = () => {
             <div key={post._id} className="mb-4 p-4 bg-brown-100 border border-brown-300 rounded-md">
               {post.picturePath && (
                 <img
-                  src={`http://localhost:3001/${post.picturePath}`}
+                  src={`http://localhost:3001/assets/${post.picturePath}`}
                   alt="Post"
-                  className="mb-2 w-full rounded-lg"
+                  className="mb-2"
                 />
               )}
-              <p className="text-brown-800">{post.description}</p>
-              <p className="text-sm text-brown-600">{new Date(post.createdAt).toLocaleDateString()}</p>
+              <p>{post.description}</p>
               <button
                 onClick={() => handleDeletePost(post._id)}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded"
+                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded mt-2"
               >
-                Delete Post
+                Delete
               </button>
             </div>
           ))}

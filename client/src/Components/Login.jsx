@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useDispatch } from "react-redux"; // Import useDispatch
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch(); // Initialize useDispatch
 
-  // Handle form submission
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -18,9 +19,17 @@ const Login = () => {
         password,
       });
 
-      // Store the token (if using one) and user info from response
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      const { token, user } = response.data;
+
+      // Dispatch action to update Redux state
+      dispatch({
+        type: "LOGIN_SUCCESS",
+        payload: { user, token },
+      });
+
+      // Store the token and user info in localStorage for persistence
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
       // Navigate to the home page or dashboard
       navigate("/");
