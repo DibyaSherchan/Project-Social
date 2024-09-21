@@ -95,6 +95,14 @@ const EditProfile = () => {
         >
           Save Changes
         </button>
+        <button
+          className="bg-yellow-700 hover:bg-dark-brown text-white font-bold py-2 px-4 rounded ml-6"
+          onClick={()=>{
+            navigate('/')
+          }}
+        >
+          Back
+        </button>
       </form>
     </div>
   );

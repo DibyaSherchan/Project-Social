@@ -78,23 +78,45 @@ const Home = () => {
       )
     );
   };
-
   const handleAddFriend = async (friendId) => {
-    const response = await fetch(`http://localhost:3001/users/${userId}/${friendId}`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    const updatedUser = await response.json();
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    dispatch(setFriends({ friends: updatedUser.friends }));
+    const userId = user?._id; // Ensure you're getting the latest userId
+    console.log("User ID:", userId);
+    
+    try {
+      const response = await fetch(`http://localhost:3001/users/${userId}/${friendId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        console.error("Error response:", errorResponse);
+        throw new Error("Failed to add friend");
+      }
+  
+      const updatedUser = await response.json();
+      console.log("Updated User:", updatedUser);
+      
+      // Update the user state and friends list without refreshing
+      setUser((prevUser) => ({
+        ...prevUser,
+        friends: updatedUser.friends,
+      }));
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      dispatch(setFriends({ friends: updatedUser.friends }));
+    } catch (error) {
+      console.error("Error adding friend:", error);
+    }
   };
-
+  
   const isFriend = (friendId) => {
-    return user?.friends?.some(friend => friend._id === friendId);
+    if (!user || !Array.isArray(user.friends)) {
+      return false;
+    }
+    return user.friends.includes(friendId);
   };
 
   return (
