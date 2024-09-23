@@ -8,6 +8,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import { Server } from "socket.io";
+import http from "http";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
@@ -27,8 +29,15 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
-app.use(cors());
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
+
+/* CORS CONFIGURATION */
+const corsOptions = {
+  origin: 'http://localhost:5173', // Replace with your frontend URL
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 /* FILE STORAGE */
 const storage = multer.diskStorage({
@@ -44,7 +53,6 @@ const upload = multer({ storage });
 /* ROUTES WITH FILES */
 app.post("/auth/register", upload.single("picture"), register);
 app.post("/posts", verifyToken, upload.single("picture"), createPost);
-
 app.put('/users/:id', upload.single('picture'), updateUser);
 
 /* ROUTES */
@@ -52,18 +60,64 @@ app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
 
+/* CREATE HTTP SERVER */
+const server = http.createServer(app);
+
+/* SOCKET.IO SETUP */
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173', // Replace with your frontend URL
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+const userSockets = new Map();
+
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  socket.on('join', (userId) => {
+    console.log(`User with ID ${userId} joined their room`);
+    userSockets.set(userId, socket);
+    socket.join(userId);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+    for (const [userId, userSocket] of userSockets.entries()) {
+      if (userSocket === socket) {
+        userSockets.delete(userId);
+        break;
+      }
+    }
+  });
+});
+
+export const sendNotificationToUser = (userId, notification) => {
+  const userSocket = userSockets.get(userId);
+  if (userSocket) {
+    userSocket.emit('receive_notification', notification);
+    console.log(`Notification sent to user ${userId}:`, notification);
+  } else {
+    console.log(`User ${userId} is not connected`);
+  }
+};
+
 /* MONGOOSE SETUP */
-const PORT = process.env.PORT || 6001;
+const PORT = process.env.PORT || 3001;
 mongoose
   .connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
   .then(() => {
-    app.listen(PORT, () => console.log(`Server Port: ${PORT}`));
-
+    server.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
+    
     /* ADD DATA ONE TIME */
     // User.insertMany(users);
     // Post.insertMany(posts);
   })
   .catch((error) => console.log(`${error} did not connect`));
+
+/* EXPORT THE SOCKET.IO INSTANCE */
+export { io };
