@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client"; // Import Socket.IO client
 import Navbar from "./Navbar";
 import { useDispatch } from "react-redux";
 import { setPosts, setFriends } from "../state";
@@ -16,6 +17,7 @@ const Home = () => {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const [posts, setPostsState] = useState([]);
+  const [socket, setSocket] = useState(null); // Socket.IO state
   const userId = user?._id;
 
   useEffect(() => {
@@ -26,6 +28,24 @@ const Home = () => {
       setUser(storedUser);
     }
   }, []);
+
+  // Connect to Socket.IO when component mounts
+  useEffect(() => {
+    if (userId) {
+      const newSocket = io("http://localhost:3001", {
+        query: { userId },
+      });
+      setSocket(newSocket);
+
+      // Listen for notification events
+      newSocket.on("receive_notification", (notification) => {
+        alert(notification.message); // Display notification (could be improved)
+      });
+
+      // Cleanup on component unmount
+      return () => newSocket.disconnect();
+    }
+  }, [userId]);
 
   const fetchPosts = async () => {
     if (!token) return;
@@ -46,21 +66,43 @@ const Home = () => {
   }, [token]);
 
   const handleLike = async (postId) => {
-    const response = await fetch(`http://localhost:3001/posts/${postId}/like`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId }),
-    });
-    const updatedPost = await response.json();
-    setPostsState((prevPosts) =>
-      prevPosts.map((post) =>
-        post._id === updatedPost._id ? updatedPost : post
-      )
-    );
+    try {
+      console.log("Attempting to like post with ID:", postId);
+      const response = await fetch(`http://localhost:3001/posts/${postId}/like`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+  
+      const updatedPost = await response.json();
+      setPostsState((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === updatedPost._id ? updatedPost : post
+        )
+      );
+  
+      // Emit notification after liking the post
+      if (socket) {
+        socket.emit("like_post", {
+          postOwnerId: updatedPost.userId,
+          likerId: userId,
+          postId,
+        });
+      }
+    } catch (error) {
+      console.error("Error liking post:", error);
+      // Handle the error appropriately (e.g., show a user-friendly message)
+    }
   };
+  
 
   const handleComment = async (postId, comment) => {
     const response = await fetch(`http://localhost:3001/posts/${postId}/comment`, {
@@ -78,6 +120,7 @@ const Home = () => {
       )
     );
   };
+  
   const handleAddFriend = async (friendId) => {
     const userId = user?._id; // Ensure you're getting the latest userId
     console.log("User ID:", userId);
@@ -191,13 +234,6 @@ const Home = () => {
                     {isFriend(post.userId) ? "Remove Friend" : "Add Friend"}
                   </button>
                 )}
-              </div>
-              <div className="mt-4">
-                {post.comments.map((comment, index) => (
-                  <div key={index} className="mb-2 p-2 bg-[#e0d6c5] rounded">
-                    <p>{comment}</p>
-                  </div>
-                ))}
               </div>
             </div>
           ))}
