@@ -76,42 +76,22 @@ const Home = () => {
   };
 
   const fetchPosts = async () => {
-    if (!token || !user || !user.friends) {
-      console.log("Token or user data is missing");
-      return;
-    }
+    if (!token) return;
 
-    try {
-      const response = await fetch("http://localhost:3001/posts", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Filter posts to only include those from friends
-      const friendPosts = data.filter((post) => 
-        user.friends.includes(post.userId) || post.userId === user._id
-      );
-
-      console.log("Fetched friend posts:", friendPosts);
-
-      setPostsState(friendPosts);
-      dispatch(setPosts({ posts: friendPosts }));
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-    }
+    const response = await fetch("http://localhost:3001/posts", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    setPostsState(data);
+    dispatch(setPosts({ posts: data }));
   };
 
   useEffect(() => {
-    if (token && user && user.friends) {
+    if (token) {
       fetchPosts();
     }
-  }, [token, user]);
+  }, [token]);
 
   const handleLike = async (postId) => {
     try {
@@ -287,12 +267,11 @@ const Home = () => {
       <div className="min-h-screen bg-[#f5e8d3] flex flex-col items-center p-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-8 text-[#5c4033]">
-            {user ? `Welcome, ${user.firstName}!` : "Welcome to our site!"}
+            Trending Page
           </h1>
         </div>
         <div className="w-full max-w-4xl bg-[#c3a087] p-6 rounded-lg shadow-lg text-[#3e2723]">
-          {posts.length > 0 ? (
-            posts.map((post) => (
+          {posts.map((post) => (
             <div
               key={post._id}
               className="mb-6 p-4 bg-white rounded-lg shadow-md"
@@ -364,20 +343,17 @@ const Home = () => {
                   post.comments.map((comment) => (
                     <p key={comment._id} className="text-gray-600">
                       {comment.comment}
-                    </p>
+                    </p> // Access the correct property here
                   ))
                 ) : (
                   <p className="text-gray-600">No comments yet.</p>
                 )}
               </div>
             </div>
-         ))
-        ) : (
-          <p className="text-center text-lg">No posts from friends to display.</p>
-        )}
+          ))}
+        </div>
       </div>
-    </div>
-  </>
+    </>
   );
 };
 

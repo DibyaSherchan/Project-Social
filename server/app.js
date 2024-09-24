@@ -13,6 +13,7 @@ import http from "http";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
+import searchRoutes from "./routes/search.js"
 import { register } from "./controllers/auth.js";
 import { createPost } from "./controllers/posts.js";
 import { updateUser } from './controllers/users.js';
@@ -61,6 +62,7 @@ app.put('/users/:id', upload.single('picture'), updateUser);
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
+app.use('/search', searchRoutes);
 
 /* CREATE HTTP SERVER */
 const server = http.createServer(app);
@@ -91,6 +93,16 @@ io.on('connection', (socket) => {
     sendNotificationToUser(postOwnerId, notification);
   });
 
+  socket.on('new_comment', (commentData) => {
+    const { postOwnerId, commenterId, comment } = commentData;
+    const notification = {
+      type: 'comment',
+      message: `User ${commenterId} commented: "${comment}"`,
+      postId: commentData.postId
+    };
+    sendNotificationToUser(postOwnerId, notification);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected');
     for (const [userId, userSocket] of userSockets.entries()) {
@@ -101,6 +113,7 @@ io.on('connection', (socket) => {
     }
   });
 });
+
 
 export const sendNotificationToUser = (userId, notification) => {
   const userSocket = userSockets.get(userId);

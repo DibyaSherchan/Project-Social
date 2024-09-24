@@ -7,6 +7,7 @@ import Profile from "./Components/Profile";
 import { Routes, Route } from "react-router-dom";
 import { UserProvider } from './UserContext'; // Import UserProvider
 import EditProfile from './Components/EditProfile'; // Import the new component
+import Trending from "./Components/Trending"
 
 const App = () => {
   return ( 
@@ -18,6 +19,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/edit-profile/:userId" element={<EditProfile />} /> {/* New route */}
+          <Route path="/trending" element={<Trending />} />
         </Routes>
       </UserProvider>
     </div>
