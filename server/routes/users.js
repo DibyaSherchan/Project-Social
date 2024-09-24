@@ -3,6 +3,7 @@ import{
     getUser,
     getUserFriends,
     addRemoveFriend,
+    getNotifications 
 }from"../controllers/users.js";
 import { verifyToken } from "../middleware/auth.js";
 import { updateUser } from '../controllers/users.js'; // Ensure this controller handles updates correctly
@@ -38,6 +39,7 @@ router.put('/:id', upload.single('profilePicture'), async (req, res) => {
 //Read
 router.get("/:id",verifyToken,getUser);
 router.get("/:id/friends",verifyToken, getUserFriends);
+router.get("/:userId/notifications", verifyToken, getNotifications);
 
 //Update
 router.patch("/:id/:friendId",verifyToken, addRemoveFriend);

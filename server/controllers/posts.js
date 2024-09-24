@@ -1,5 +1,7 @@
 import Post from "../models/post.js";
 import User from "../models/user.js";
+import Notification from "../models/notification.js";
+import { sendNotificationToUser } from "../app.js";
 
 /* CREATE */
 export const createPost = async (req, res) => {
@@ -46,11 +48,10 @@ export const getUserPosts = async (req, res) => {
   }
 };
 
-/* UPDATE */
 export const likePost = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id; // Get user ID from middleware
+    const userId = req.user.id;
 
     console.log("Attempting to like post:", id, "by user:", userId);
 
@@ -60,7 +61,7 @@ export const likePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    const isLiked = post.likes.get(userId); // This should work if likes is a Map
+    const isLiked = post.likes.get(userId);
 
     if (isLiked) {
       post.likes.delete(userId);
@@ -68,7 +69,28 @@ export const likePost = async (req, res) => {
       post.likes.set(userId, true);
     }
 
-    const updatedPost = await post.save(); // Save the updated post directly
+    const updatedPost = await post.save();
+
+    // Create a notification if the post is liked (not unliked) and it's not the user's own post
+    if (!isLiked && post.userId.toString() !== userId) {
+      const notification = new Notification({
+        userId: post.userId,
+        type: 'like',
+        message: `User ${userId} liked your post`,
+        relatedId: id,
+      });
+      await notification.save();
+
+      const io = req.app.get('io');
+      if (io) {
+        sendNotificationToUser(post.userId.toString(), {
+          type: 'like',
+          message: `User ${userId} liked your post`,
+          postId: id
+        });
+      }
+    }
+
     res.status(200).json(updatedPost);
   } catch (err) {
     console.error("Error in likePost:", err);

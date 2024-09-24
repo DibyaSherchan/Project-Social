@@ -9,6 +9,7 @@ const Profile = () => {
   const [posts, setPosts] = useState([]);
   const [post, setPost] = useState("");
   const [image, setImage] = useState(null);
+  const [notifications,setNotifications] = useState([])
   const navigate = useNavigate();
 
   // Get the stored user object from localStorage
@@ -147,7 +148,7 @@ const Profile = () => {
 
   return (
     <>
-      <Navbar />
+      <Navbar notifications={notifications} setNotifications={setNotifications} />
       <div className="max-w-2xl mx-auto p-6 bg-cream border border-brown-300 shadow-lg rounded-lg">
         <div className="flex items-center mb-6">
           <img

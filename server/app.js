@@ -34,6 +34,8 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 /* CORS CONFIGURATION */
 const corsOptions = {
   origin: 'http://localhost:5173', // Replace with your frontend URL
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -65,12 +67,10 @@ const server = http.createServer(app);
 
 /* SOCKET.IO SETUP */
 const io = new Server(server, {
-  cors: {
-    origin: 'http://localhost:5173', // Replace with your frontend URL
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
+  cors: corsOptions,
+  transports: ['websocket', 'polling'],
 });
+app.set('io', io);
 const userSockets = new Map();
 
 io.on('connection', (socket) => {
@@ -80,6 +80,15 @@ io.on('connection', (socket) => {
     console.log(`User with ID ${userId} joined their room`);
     userSockets.set(userId, socket);
     socket.join(userId);
+  });
+
+  socket.on('like_post', ({ postOwnerId, likerId, postId }) => {
+    const notification = {
+      type: 'like',
+      message: `User ${likerId} liked your post`,
+      postId: postId
+    };
+    sendNotificationToUser(postOwnerId, notification);
   });
 
   socket.on('disconnect', () => {

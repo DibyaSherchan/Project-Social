@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client"; // Import Socket.IO client
+import { io } from "socket.io-client";
 import Navbar from "./Navbar";
 import { useDispatch } from "react-redux";
 import { setPosts, setFriends } from "../state";
@@ -17,7 +17,8 @@ const Home = () => {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const [posts, setPostsState] = useState([]);
-  const [socket, setSocket] = useState(null); // Socket.IO state
+  const [socket, setSocket] = useState(null);
+  const [notifications, setNotifications] = useState([]);
   const userId = user?._id;
 
   useEffect(() => {
@@ -26,27 +27,51 @@ const Home = () => {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(storedUser);
+      fetchNotifications(storedUser._id, storedToken);
     }
   }, []);
 
-  // Connect to Socket.IO when component mounts
   useEffect(() => {
     if (userId) {
       const newSocket = io("http://localhost:3001", {
         query: { userId },
+        withCredentials: true,
+        transports: ['websocket', 'polling'],
       });
+      
+
+      newSocket.on("connect", () => {
+        console.log("Connected to Socket.IO server");
+        newSocket.emit("join", userId);
+      });
+
+      newSocket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+      });
+
+      newSocket.on("receive_notification", (notification) => {
+        console.log("Received notification:", notification);
+        setNotifications(prev => [notification, ...prev]);
+      });
+
       setSocket(newSocket);
 
-      // Listen for notification events
-      newSocket.on("receive_notification", (notification) => {
-        alert(notification.message); // Display notification (could be improved)
-      });
-
-      // Cleanup on component unmount
       return () => newSocket.disconnect();
     }
   }, [userId]);
 
+  const fetchNotifications = async (userId, token) => {
+    try {
+      const response = await fetch(`http://localhost:3001/users/${userId}/notifications`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setNotifications(data);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
   const fetchPosts = async () => {
     if (!token) return;
 
@@ -99,7 +124,6 @@ const Home = () => {
       }
     } catch (error) {
       console.error("Error liking post:", error);
-      // Handle the error appropriately (e.g., show a user-friendly message)
     }
   };
   
@@ -164,7 +188,7 @@ const Home = () => {
 
   return (
     <>
-      <Navbar />
+       <Navbar notifications={notifications} setNotifications={setNotifications} />
       <div className="min-h-screen bg-[#f5e8d3] flex flex-col items-center p-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-8 text-[#5c4033]">

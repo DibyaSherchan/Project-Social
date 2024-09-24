@@ -1,57 +1,75 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { IoPersonCircleOutline } from 'react-icons/io5';
-import { MdOutlineLogin } from 'react-icons/md';
-import { IoHome } from 'react-icons/io5';
-import { IoMdNotifications } from 'react-icons/io';
-import { useUser } from '../UserContext';
-import io from 'socket.io-client'; // Import Socket.IO client
+import React, { useState, useRef, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { IoPersonCircleOutline } from "react-icons/io5";
+import { MdOutlineLogin } from "react-icons/md";
+import { IoHome } from "react-icons/io5";
+import { IoMdNotifications } from "react-icons/io";
+import { useUser } from "../UserContext";
+import io from "socket.io-client"; // Import Socket.IO client
 
-const Navbar = () => {
+const Navbar = ({ notifications, setNotifications }) => {
   const [isOverlayVisible, setOverlayVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [notifications, setNotifications] = useState([]); // State for notifications
-  const [isNotificationModalVisible, setNotificationModalVisible] = useState(false); // Notification modal state
+  const [isNotificationModalVisible, setNotificationModalVisible] =
+    useState(false);
   const overlayRef = useRef(null);
   const { user } = useUser();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
 
     // Initialize the socket connection
     if (user && user._id) {
-      const newSocket = io('http://localhost:3001', { withCredentials: true });
-      
-      newSocket.emit('join', user._id);
+      const newSocket = io("http://localhost:3001", { withCredentials: true });
 
-      newSocket.on('receive_notification', (notification) => {
-        setNotifications((prevNotifications) => [notification, ...prevNotifications]);
+      newSocket.emit("join", user._id);
+
+      newSocket.on("receive_notification", (notification) => {
+        setNotifications((prevNotifications) => [
+          notification,
+          ...prevNotifications,
+        ]);
       });
 
       return () => newSocket.disconnect();
     }
-  }, [user]);
+  }, [user, setNotifications]);
 
   const handleLogout = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
-      alert('You are not logged in.');
+      alert("You are not logged in.");
       return;
     }
 
-    const confirmLogout = window.confirm('Are you sure you want to log out?');
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (!confirmLogout) return;
 
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  const renderNotification = (notification) => {
+    switch (notification.type) {
+      case "like":
+        return (
+          <li key={notification._id} className="mb-2 p-2 bg-white rounded">
+            {notification.message}
+          </li>
+        );
+      // Add more cases for different notification types if needed
+      default:
+        return null;
+    }
   };
 
   const toggleOverlay = () => setOverlayVisible(!isOverlayVisible);
-  const toggleNotificationModal = () => setNotificationModalVisible(!isNotificationModalVisible); // Toggle notification modal
+  const toggleNotificationModal = () =>
+    setNotificationModalVisible(!isNotificationModalVisible); // Toggle notification modal
 
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
@@ -63,12 +81,12 @@ const Navbar = () => {
 
   useEffect(() => {
     if (isOverlayVisible) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     } else {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOverlayVisible]);
 
@@ -80,10 +98,10 @@ const Navbar = () => {
           <NavLink to="/">
             <IoHome className="text-[28px] text-[#5c4033] hover:text-[#3e2723] transition" />
           </NavLink>
-          <button onClick={toggleNotificationModal}>
+          <button onClick={toggleNotificationModal} className="relative">
             <IoMdNotifications className="text-[28px] text-[#5c4033] hover:text-[#3e2723] transition" />
             {notifications.length > 0 && (
-              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {notifications.length}
               </span>
             )}
@@ -145,16 +163,14 @@ const Navbar = () => {
             >
               &times;
             </button>
-            <h2 className="text-xl font-bold mb-4 text-[#5c4033]">Notifications</h2>
+            <h2 className="text-xl font-bold mb-4 text-[#5c4033]">
+              Notifications
+            </h2>
             <ul>
               {notifications.length === 0 ? (
                 <li className="text-gray-600">No new notifications.</li>
               ) : (
-                notifications.map((notification, index) => (
-                  <li key={index} className="mb-2 p-2 bg-white rounded">
-                    {notification.message}
-                  </li>
-                ))
+                notifications.map(renderNotification)
               )}
             </ul>
           </div>
